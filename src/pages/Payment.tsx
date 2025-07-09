@@ -67,7 +67,7 @@ export const Payment: React.FC = () => {
                 <Play className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Prem1er 1
+                Premier 1
               </span>
             </div>
             <button

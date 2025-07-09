@@ -15,10 +15,10 @@ export const useAuth = () => {
     const setLoadingTimeout = () => {
       timeoutId = setTimeout(() => {
         if (mounted) {
-          console.warn('Auth loading timeout reached, setting loading to false');
+          console.warn('useAuth: Auth loading timeout reached, setting loading to false');
           setLoading(false);
         }
-      }, 5000); // Reduced to 5 seconds for faster feedback
+      }, 8000); // Increased to 8 seconds to give more time
     };
 
     const clearLoadingTimeout = () => {
@@ -31,14 +31,25 @@ export const useAuth = () => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('Getting initial auth session...');
-        const currentUser = await auth.getCurrentUser();
+        console.log('useAuth: Getting initial auth session...');
+        
+        // Add timeout to initial session check
+        const getCurrentUserPromise = auth.getCurrentUser();
+        const timeoutPromise = new Promise<null>((_, reject) => {
+          setTimeout(() => reject(new Error('Initial session check timed out after 5 seconds')), 5000);
+        });
+
+        const currentUser = await Promise.race([getCurrentUserPromise, timeoutPromise]);
+        
         if (mounted) {
+          console.log('useAuth: Initial session result:', currentUser ? 'User found' : 'No user');
           setUser(currentUser);
-          console.log('Initial auth check completed:', currentUser ? 'User found' : 'No user');
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('useAuth: Error getting initial session:', error);
+        if (error instanceof Error && error.message.includes('timed out')) {
+          console.warn('useAuth: Initial session check timed out - continuing without user');
+        }
         if (mounted) {
           setUser(null);
         }
@@ -58,10 +69,20 @@ export const useAuth = () => {
     let subscription: any = null;
     
     try {
+      console.log('useAuth: Setting up auth state change listener...');
       const { data } = auth.onAuthStateChange(async (event, session) => {
-        console.log('Auth state change:', event, session ? 'Session present' : 'No session');
+        console.log('useAuth: Auth state change event:', event);
+        console.log('useAuth: Session details:', { 
+          hasSession: !!session, 
+          hasUser: !!session?.user,
+          userId: session?.user?.id,
+          userEmail: session?.user?.email 
+        });
         
-        if (!mounted) return;
+        if (!mounted) {
+          console.log('useAuth: Component unmounted, ignoring auth change');
+          return;
+        }
         
         // Clear timeout since we got a response
         clearLoadingTimeout();
@@ -70,30 +91,35 @@ export const useAuth = () => {
         
         if (session?.user) {
           try {
+            console.log('useAuth: Getting user details for session...');
             const currentUser = await auth.getCurrentUser();
             if (mounted) {
+              console.log('useAuth: Setting user state:', currentUser ? 'User loaded' : 'User null');
               setUser(currentUser);
             }
           } catch (error) {
-            console.error('Error getting user after auth change:', error);
+            console.error('useAuth: Error getting user after auth change:', error);
             if (mounted) {
               setUser(null);
             }
           }
         } else {
+          console.log('useAuth: No session user, clearing user state');
           if (mounted) {
             setUser(null);
           }
         }
         
         if (mounted) {
+          console.log('useAuth: Setting loading to false after auth change');
           setLoading(false);
         }
       });
       
       subscription = data?.subscription;
+      console.log('useAuth: Auth state listener set up successfully');
     } catch (error) {
-      console.error('Error setting up auth state listener:', error);
+      console.error('useAuth: Error setting up auth state listener:', error);
       if (mounted) {
         clearLoadingTimeout();
         setLoading(false);
@@ -101,13 +127,15 @@ export const useAuth = () => {
     }
 
     return () => {
+      console.log('useAuth: Cleaning up auth hook');
       mounted = false;
       clearLoadingTimeout();
       if (subscription) {
         try {
           subscription.unsubscribe();
+          console.log('useAuth: Auth listener unsubscribed');
         } catch (error) {
-          console.error('Error unsubscribing from auth changes:', error);
+          console.error('useAuth: Error unsubscribing from auth changes:', error);
         }
       }
     };
@@ -118,17 +146,36 @@ export const useAuth = () => {
     try {
       console.log('useAuth: Starting signup process...');
       const result = await auth.signUp(email, password, username);
-      console.log('useAuth: Signup successful, result:', result);
-      console.log('useAuth: Waiting for auth state update...');
+      console.log('useAuth: Signup result:', { 
+        hasUser: !!result.user, 
+        hasSession: !!result.session,
+        userId: result.user?.id 
+      });
       
-      // Wait for the auth state to be updated by the listener
+      // If we have a session immediately, update the user state
+      if (result.session) {
+        console.log('useAuth: Session available immediately, getting user...');
+        const currentUser = await auth.getCurrentUser();
+        setUser(currentUser);
+        setSession(result.session);
+        setLoading(false);
+        console.log('useAuth: User state updated immediately after signup');
+      } else {
+        console.log('useAuth: No immediate session, waiting for auth state update...');
+        // If no session, wait for the auth state change listener to handle it
+        // However, in some cases (e.g. email confirmation required) the auth
+        // state change event may not fire immediately. To prevent the UI from
+        // being stuck in a perpetual loading state we proactively clear the
+        // loading flag after the signup request has completed.
+        setLoading(false);
+      }
+      
       return result;
     } catch (error) {
       console.error('useAuth: Signup error:', error);
       setLoading(false); // Set loading to false on error
       throw error;
     }
-    // Don't set loading to false here - let the auth state change listener handle it
   };
 
   const signIn = async (email: string, password: string) => {
@@ -137,16 +184,25 @@ export const useAuth = () => {
       console.log('useAuth: Starting signin process...');
       const result = await auth.signIn(email, password);
       console.log('useAuth: Signin successful, result:', result);
-      console.log('useAuth: Waiting for auth state update...');
       
-      // Wait for the auth state to be updated by the listener
+      // If we have a session immediately, update the user state
+      if (result.session) {
+        console.log('useAuth: Session available immediately, getting user...');
+        const currentUser = await auth.getCurrentUser();
+        setUser(currentUser);
+        setSession(result.session);
+        setLoading(false);
+        console.log('useAuth: User state updated immediately after signin');
+      } else {
+        console.log('useAuth: No immediate session, waiting for auth state update...');
+      }
+      
       return result;
     } catch (error) {
       console.error('useAuth: Signin error:', error);
       setLoading(false); // Set loading to false on error
       throw error;
     }
-    // Don't set loading to false here - let the auth state change listener handle it
   };
 
   const signOut = async () => {

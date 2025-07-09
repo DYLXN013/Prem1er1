@@ -41,10 +41,8 @@ export const Home: React.FC = () => {
       return;
     }
     
-    // If user is authenticated, handle video navigation here
-    // For now, we'll show an alert since there's no video detail page yet
-    // In the future, this could navigate to `/video/${videoId}` when that route is implemented
-    alert(`Video clicked: ${videoId}. Video detail page coming soon!`);
+    // Navigate to video detail page
+    navigate(`/video/${videoId}`);
   };
 
   return (

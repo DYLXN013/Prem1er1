@@ -20,6 +20,21 @@ export const Calendar: React.FC = () => {
     { id: 'seriea', name: 'Serie A' }
   ];
 
+  // Function to get team-specific colors for match cards
+  const getTeamColorClasses = (homeTeam: string, awayTeam: string) => {
+    const teamColors: { [key: string]: string } = {
+      'MUN': 'bg-slate-100 text-slate-700 dark:bg-slate-800/20 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/30',
+      'LIV': 'bg-red-100 text-red-900 dark:bg-red-800/20 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800/30',
+      'ARS': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/30',
+      'CHE': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/30',
+      'MCI': 'bg-sky-100 text-sky-800 dark:bg-sky-900/20 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/30',
+      'TOT': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/30'
+    };
+
+    // Use home team color as priority, fallback to away team, then default
+    return teamColors[homeTeam] || teamColors[awayTeam] || 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500';
+  };
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -191,8 +206,8 @@ export const Calendar: React.FC = () => {
                               to={match.status === 'live' ? `/live/${match.id}` : `/match/${match.id}`}
                               className={`block text-xs p-1 rounded truncate transition-colors ${
                                 match.status === 'live' 
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/30'
-                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
+                                  ? 'bg-rose-200 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 hover:bg-rose-300 dark:hover:bg-rose-900/40'
+                                  : getTeamColorClasses(match.home_team.short_name, match.away_team.short_name)
                               }`}
                             >
                               {match.home_team.short_name} vs {match.away_team.short_name}

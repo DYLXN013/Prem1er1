@@ -11,7 +11,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false // Disable automatic session detection from URL
+    detectSessionInUrl: false, // Disable automatic session detection from URL
+    flowType: 'implicit', // Use implicit flow
+    debug: true // Enable debug mode to see what's happening
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'premier1-app'
+    }
+  },
+  realtime: {
+    timeout: 10000 // 10 second timeout for realtime connections
   }
 });
 

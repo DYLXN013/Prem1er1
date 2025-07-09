@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Play } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 export const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -19,20 +20,128 @@ export const Auth: React.FC = () => {
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
+  const [connectionTest, setConnectionTest] = useState<string | null>(null);
+  const [networkTest, setNetworkTest] = useState<string | null>(null);
   
   const { signIn, signUp, loading, user, isAuthenticated } = useAuth();
+
+  // Test basic network connectivity
+  const testNetwork = async () => {
+    try {
+      setNetworkTest('Testing basic network...');
+      console.log('Testing basic network connectivity...');
+      
+      // Test 1: Basic fetch to a reliable endpoint
+      const response = await fetch('https://httpbin.org/get', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        setNetworkTest('Network OK, testing Supabase URL...');
+        console.log('Basic network test: SUCCESS');
+        
+        // Test 2: Basic fetch to Supabase URL (without auth)
+        const supabaseResponse = await fetch(import.meta.env.VITE_SUPABASE_URL + '/rest/v1/', {
+          method: 'GET',
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Supabase URL test response:', supabaseResponse.status, supabaseResponse.statusText);
+        
+        if (supabaseResponse.status === 200 || supabaseResponse.status === 401) {
+          setNetworkTest('Supabase URL reachable! Issue might be with auth.getSession()');
+        } else {
+          setNetworkTest(`Supabase URL issue: ${supabaseResponse.status} ${supabaseResponse.statusText}`);
+        }
+      } else {
+        setNetworkTest(`Network issue: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Network test error:', error);
+      setNetworkTest(`Network test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Test Supabase connection
+  const testConnection = async () => {
+    try {
+      setConnectionTest('Testing Supabase connection...');
+      console.log('Testing Supabase connection...');
+      
+      // Test 1: Check if we can reach the auth endpoint directly
+      setConnectionTest('Testing Supabase auth endpoint...');
+      try {
+        const authResponse = await fetch(import.meta.env.VITE_SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+          method: 'POST',
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // Empty body, just testing endpoint reachability
+        });
+        
+        console.log('Auth endpoint test:', authResponse.status, authResponse.statusText);
+        setConnectionTest(`Auth endpoint reachable: ${authResponse.status}`);
+      } catch (authError) {
+        console.error('Auth endpoint test failed:', authError);
+        setConnectionTest(`Auth endpoint failed: ${authError instanceof Error ? authError.message : 'Unknown error'}`);
+        return;
+      }
+      
+      // Test 2: Try a simpler Supabase client operation
+      setConnectionTest('Testing Supabase client operation...');
+      try {
+        // Simple check that the client is initialized
+        console.log('Supabase client initialized, testing auth.getSession()...');
+        setConnectionTest(`Client initialized OK, testing auth.getSession()...`);
+      } catch (clientError) {
+        console.error('Supabase client issue:', clientError);
+        setConnectionTest(`Client config error: ${clientError instanceof Error ? clientError.message : 'Unknown error'}`);
+        return;
+      }
+      
+      // Test 3: The actual problematic call with timeout
+      setConnectionTest('Testing auth.getSession() with timeout...');
+      const connectionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection test timed out after 10 seconds')), 10000);
+      });
+
+      const { data, error } = await Promise.race([connectionPromise, timeoutPromise]) as any;
+      console.log('Connection test result:', { data: !!data, error });
+      
+      if (error) {
+        setConnectionTest(`Connection error: ${error.message}`);
+      } else {
+        setConnectionTest('Supabase connection successful!');
+        // Clear after 3 seconds
+        setTimeout(() => setConnectionTest(null), 3000);
+      }
+    } catch (error) {
+      console.error('Connection test error:', error);
+      setConnectionTest(`Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   // Emergency timeout for button loading state
   useEffect(() => {
     if (localLoading) {
       const timeout = setTimeout(() => {
         console.warn('Auth operation timeout, resetting local loading state');
+        // Check if the main loading is still active - if so, this might be a real issue
+        if (loading) {
+          setError('Signup is taking longer than expected. Please try again or check your internet connection.');
+        }
         setLocalLoading(false);
-      }, 10000); // 10 second timeout for button
+      }, 15000); // Increased to 15 seconds to give more time
 
       return () => clearTimeout(timeout);
     }
-  }, [localLoading]);
+  }, [localLoading, loading]);
 
   // Handle navigation after successful authentication
   useEffect(() => {
@@ -205,6 +314,61 @@ export const Auth: React.FC = () => {
                 </p>
               </div>
 
+              {/* Debug section */}
+              <div className="mb-6 space-y-2">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={testNetwork}
+                    className="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700"
+                    disabled={!!networkTest}
+                  >
+                    Test Network
+                  </button>
+                  <button
+                    onClick={testConnection}
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                    disabled={!!connectionTest}
+                  >
+                    Test Supabase
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Direct test of signup endpoint without getSession()
+                      const uniqueEmail = `test${Date.now()}@example.com`;
+                      setConnectionTest('Testing direct signup...');
+                      supabase.auth.signUp({
+                        email: uniqueEmail,
+                        password: 'testpass123'
+                      }).then(result => {
+                        console.log('Direct signup test result:', result);
+                        if (result.error) {
+                          setConnectionTest(`Signup test error: ${result.error.message}`);
+                        } else {
+                          setConnectionTest('✅ Direct signup works! Try your real signup now.');
+                        }
+                      }).catch(error => {
+                        console.error('Direct signup test failed:', error);
+                        setConnectionTest(`Direct signup failed: ${error.message}`);
+                      });
+                    }}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    disabled={!!connectionTest}
+                  >
+                    Test Signup
+                  </button>
+                </div>
+                {networkTest && (
+                  <div className="text-xs text-yellow-300 bg-yellow-900/30 p-2 rounded">
+                    {networkTest}
+                  </div>
+                )}
+                {connectionTest && (
+                  <div className="text-xs text-blue-300 bg-blue-900/30 p-2 rounded">
+                    {connectionTest}
+                  </div>
+                )}
+              </div>
+
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 {mode === 'signup' && (
@@ -271,6 +435,9 @@ export const Auth: React.FC = () => {
                 {error && (
                   <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-4">
                     <p className="text-sm text-red-400">{error}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Check the browser console for detailed error logs.
+                    </p>
                   </div>
                 )}
 

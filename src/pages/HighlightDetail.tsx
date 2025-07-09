@@ -12,6 +12,11 @@ export const HighlightDetail: React.FC = () => {
 
   const highlight = highlights.find(h => h.id === id);
 
+  // Scroll to top when component mounts
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   React.useEffect(() => {
     if (highlight) {
       incrementViews(highlight.id);

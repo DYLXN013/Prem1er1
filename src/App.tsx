@@ -8,6 +8,7 @@ import { Payment } from './pages/Payment';
 import { LiveGame } from './pages/LiveGame';
 import { Highlights } from './pages/Highlights';
 import { HighlightDetail } from './pages/HighlightDetail';
+import { VideoDetail } from './pages/VideoDetail';
 import { Calendar } from './pages/Calendar';
 import { Settings } from './pages/Settings';
 import { Profile } from './pages/Profile';
@@ -34,6 +35,7 @@ function AppContent() {
           <Route path="/live" element={<LiveGame />} />
           <Route path="/highlights" element={<Highlights />} />
           <Route path="/highlight/:id" element={<HighlightDetail />} />
+          <Route path="/video/:id" element={<VideoDetail />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />

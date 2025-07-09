@@ -1,13 +1,12 @@
 import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
 
 interface ButtonProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
-  icon?: LucideIcon;
+  icon?: React.ComponentType<any>;
   className?: string;
   type?: 'button' | 'submit' | 'reset';
 }

@@ -23,6 +23,11 @@ export const LiveGame: React.FC = () => {
 
   const match = matches.find(m => m.id === id);
 
+  // Scroll to top when component mounts
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
