@@ -18,7 +18,8 @@ export const auth = {
       options: {
         data: {
           username
-        }
+        },
+        emailRedirectTo: undefined // Disable email verification redirect
       }
     });
 

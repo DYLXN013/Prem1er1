@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, User, Settings, LogOut, Play, Menu, X, Shield, Users, CreditCard } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useModeration } from '../../hooks/useModeration';
-import { AuthModal } from '../auth/AuthModal';
 import { SearchModal } from '../search/SearchModal';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 
@@ -11,11 +10,10 @@ export const Navbar: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [isModerator, setIsModerator] = useState(false);
   
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
   const { checkModerationPermissions } = useModeration();
 
@@ -47,14 +45,13 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const openAuthModal = (mode: 'signin' | 'signup') => {
-    setAuthMode(mode);
-    setIsAuthModalOpen(true);
-    setIsUserMenuOpen(false); // Close user menu if open
-  };
-
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false);
+  const handleAuthNavigation = (mode: 'signin' | 'signup') => {
+    const currentPath = location.pathname;
+    const redirectParam = currentPath !== '/' ? `?redirect=${encodeURIComponent(currentPath)}` : '';
+    const modeParam = mode === 'signup' ? `${redirectParam ? '&' : '?'}mode=signup` : '';
+    navigate(`/auth${redirectParam}${modeParam}`);
+    setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -103,7 +100,13 @@ export const Navbar: React.FC = () => {
               {user && <NotificationCenter />}
 
               {/* User Menu */}
-              {user ? (
+              {loading ? (
+                // Show loading indicator when auth is loading
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 animate-spin rounded-full border-2 border-gray-600 border-t-blue-500"></div>
+                  <span className="text-sm text-gray-400">Loading...</span>
+                </div>
+              ) : user ? (
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -158,7 +161,7 @@ export const Navbar: React.FC = () => {
                       <hr className="my-2 border-gray-800" />
                       <button 
                         onClick={handleSignOut}
-                        className="flex items-center w-full px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all"
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-all disabled:opacity-50"
                         disabled={loading}
                       >
                         <LogOut className="w-4 h-4 mr-3" />
@@ -170,13 +173,13 @@ export const Navbar: React.FC = () => {
               ) : (
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => openAuthModal('signin')}
+                    onClick={() => handleAuthNavigation('signin')}
                     className="text-gray-300 hover:text-white px-4 py-2 text-sm font-medium transition-colors"
                   >
                     Sign In
                   </button>
                   <button
-                    onClick={() => openAuthModal('signup')}
+                    onClick={() => handleAuthNavigation('signup')}
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105"
                   >
                     Sign Up
@@ -222,22 +225,21 @@ export const Navbar: React.FC = () => {
               )}
               
               {/* Mobile Auth Buttons */}
-              {!user && (
+              {loading ? (
+                <div className="mt-4 px-2 flex items-center justify-center">
+                  <div className="w-6 h-6 animate-spin rounded-full border-2 border-gray-600 border-t-blue-500"></div>
+                  <span className="ml-3 text-sm text-gray-400">Loading...</span>
+                </div>
+              ) : !user && (
                 <div className="mt-4 px-2 space-y-2">
                   <button
-                    onClick={() => {
-                      openAuthModal('signin');
-                      setIsMobileMenuOpen(false);
-                    }}
+                    onClick={() => handleAuthNavigation('signin')}
                     className="w-full text-gray-300 hover:text-white px-4 py-3 text-base font-medium transition-colors text-center border border-gray-700 rounded-xl hover:bg-gray-800/50"
                   >
                     Sign In
                   </button>
                   <button
-                    onClick={() => {
-                      openAuthModal('signup');
-                      setIsMobileMenuOpen(false);
-                    }}
+                    onClick={() => handleAuthNavigation('signup')}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-xl text-base font-medium transition-all duration-300"
                   >
                     Sign Up
@@ -253,12 +255,6 @@ export const Navbar: React.FC = () => {
       <SearchModal 
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
-      />
-      
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={closeAuthModal}
-        initialMode={authMode}
       />
     </>
   );

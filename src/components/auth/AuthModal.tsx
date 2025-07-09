@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,16 +21,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   
-  const { signIn, signUp, loading } = useAuth();
+  const { signIn, signUp, loading, user, isAuthenticated } = useAuth();
 
   // Reset form when modal opens/closes or mode changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
       resetForm();
     }
   }, [isOpen, initialMode]);
+
+  // Handle modal close after successful authentication
+  useEffect(() => {
+    if (isAuthenticated && user && isOpen && (isSigningUp || mode === 'signin')) {
+      if (isSigningUp) {
+        setSuccess('Account created successfully! You are now logged in.');
+        setIsSigningUp(false);
+        
+        // Close modal after showing success message
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      } else {
+        // For signin, close immediately
+        onClose();
+      }
+    }
+  }, [isAuthenticated, user, isOpen, isSigningUp, mode, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,14 +62,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setError('Username is required');
           return;
         }
+        setIsSigningUp(true);
         await signUp(email, password, username);
-        setSuccess('Account created successfully! Please check your email to verify your account.');
+        // Modal close will be handled by the useEffect when user state updates
       } else {
         await signIn(email, password);
-        onClose();
+        // Modal close will be handled by the useEffect when user state updates
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+      setIsSigningUp(false);
     }
   };
 

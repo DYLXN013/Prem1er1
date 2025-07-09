@@ -1,7 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/navigation/Navbar';
+import { AuthGuard } from './components/auth/AuthGuard';
 import { Home } from './pages/Home';
+import { Auth } from './pages/Auth';
+import { Payment } from './pages/Payment';
 import { LiveGame } from './pages/LiveGame';
 import { Highlights } from './pages/Highlights';
 import { HighlightDetail } from './pages/HighlightDetail';
@@ -15,15 +18,18 @@ import { ModerationPanel } from './components/moderation/ModerationPanel';
 import { BillingManagement } from './components/payments/BillingManagement';
 import { useTheme } from './hooks/useTheme';
 
-function App() {
-  useTheme(); // Initialize theme
+function AppContent() {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/auth' || location.pathname === '/payment';
 
   return (
-    <Router>
+    <AuthGuard>
       <div className="min-h-screen bg-black transition-colors">
-        <Navbar />
+        {!hideNavbar && <Navbar />}
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/payment" element={<Payment />} />
           <Route path="/live/:id" element={<LiveGame />} />
           <Route path="/live" element={<LiveGame />} />
           <Route path="/highlights" element={<Highlights />} />
@@ -39,6 +45,16 @@ function App() {
           <Route path="/watch-party/:id" element={<WatchParty />} />
         </Routes>
       </div>
+    </AuthGuard>
+  );
+}
+
+function App() {
+  useTheme(); // Initialize theme
+
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

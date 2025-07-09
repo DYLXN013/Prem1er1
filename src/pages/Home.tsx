@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, Calendar, TrendingUp, Clock, ArrowRight, Users, Sparkles, Zap, Star } from 'lucide-react';
 import { MatchCard, MatchCardSkeleton } from '../components/cards/MatchCard';
 import { HighlightCard } from '../components/cards/HighlightCard';
@@ -11,6 +11,7 @@ import { useVideos } from '../hooks/useVideos';
 import { useAuth } from '../hooks/useAuth';
 
 export const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [showWatchPartyModal, setShowWatchPartyModal] = useState(false);
   const [selectedContent, setSelectedContent] = useState<{
     id: string;
@@ -21,7 +22,7 @@ export const Home: React.FC = () => {
   const { matches, loading: matchesLoading, getMatchesByStatus } = useMatches();
   const { highlights, loading: highlightsLoading, formatDuration, formatViews, getTimeAgo } = useHighlights();
   const { videos, loading: videosLoading } = useVideos();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const liveMatches = getMatchesByStatus('live');
   const upcomingMatches = getMatchesByStatus('upcoming').slice(0, 6);
@@ -31,6 +32,19 @@ export const Home: React.FC = () => {
   const handleCreateWatchParty = (contentId: string, contentType: 'video' | 'highlight' | 'match', title: string) => {
     setSelectedContent({ id: contentId, type: contentType, title });
     setShowWatchPartyModal(true);
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    if (!isAuthenticated) {
+      // Navigate to auth page with redirect parameter
+      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
+    
+    // If user is authenticated, handle video navigation here
+    // For now, we'll show an alert since there's no video detail page yet
+    // In the future, this could navigate to `/video/${videoId}` when that route is implemented
+    alert(`Video clicked: ${videoId}. Video detail page coming soon!`);
   };
 
   return (
@@ -186,6 +200,7 @@ export const Home: React.FC = () => {
                     formatDuration={(seconds) => formatDuration(seconds)}
                     formatViews={(views) => formatViews(views)}
                     getTimeAgo={(date) => getTimeAgo(date)}
+                    onClick={() => handleVideoClick(video.id)}
                   />
                   
                   {/* Watch Party Button */}
