@@ -148,27 +148,51 @@ const getTimeAgo = (dateString: string): string => {
 export const highlights: Highlight[] = [
   {
     id: 'highlight-1',
-    title: 'Best Goals of the Week',
+    title: 'Premier League Goal of the Month - Spectacular Strikes',
     match: liveMatches[0],
     duration: '5:23',
     thumbnailUrl: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&fit=crop',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     views: 245000,
     timestamp: '2 hours ago',
-    description: 'Amazing goals from this week\'s Premier League matches',
-    tags: ['goals', 'premier-league', 'highlights']
+    description: 'The most incredible goals from Premier League matches this month, featuring stunning long-range efforts and brilliant team moves.',
+    tags: ['goals', 'premier-league', 'highlights', 'strikes', 'world-class']
   },
   {
     id: 'highlight-2',
-    title: 'Incredible Saves Compilation',
+    title: 'Goalkeeper Masterclass - Impossible Saves',
     match: liveMatches[1],
     duration: '3:45',
     thumbnailUrl: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&fit=crop',
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     views: 156000,
     timestamp: '5 hours ago',
-    description: 'Best goalkeeper saves from recent matches',
-    tags: ['saves', 'goalkeepers', 'highlights']
+    description: 'Watch the world\'s best goalkeepers pull off miraculous saves that defy belief.',
+    tags: ['saves', 'goalkeepers', 'highlights', 'reflexes', 'world-class']
+  },
+  {
+    id: 'highlight-3',
+    title: 'El Clásico Highlights - Barcelona vs Real Madrid',
+    match: liveMatches[0],
+    duration: '8:00',
+    thumbnailUrl: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&fit=crop',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    views: 892000,
+    timestamp: '1 day ago',
+    description: 'The biggest match in world football delivered drama, goals, and moments of pure magic.',
+    tags: ['el-clasico', 'barcelona', 'real-madrid', 'rivalry', 'la-liga']
+  },
+  {
+    id: 'highlight-4',
+    title: 'Champions League Final - Best Moments',
+    match: liveMatches[1],
+    duration: '12:00',
+    thumbnailUrl: 'https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&fit=crop',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    views: 1200000,
+    timestamp: '3 days ago',
+    description: 'The pinnacle of European football. Experience the drama and unforgettable moments.',
+    tags: ['champions-league', 'final', 'european-football', 'drama', 'historic']
   }
 ];
 
